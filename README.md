@@ -1,0 +1,2 @@
+# chatCore
+chat client repo 
