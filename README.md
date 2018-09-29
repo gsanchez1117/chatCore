@@ -9,7 +9,7 @@ chat client repo
     - open a cmd or terminal window and change to the directory you wish to clone the repo in.
     - clone the repo with this command: `git clone https://github.com/gsanchez1117/chatCore.git`.
 5) Open Visual Studio Code and select "add workspace folder" and select the "chatCore" folder you just cloned.
-6) In Visual Studio Code select "Terminal->New Terminal" and type the command: `expo start`.
+6) In Visual Studio Code select "Terminal->New Terminal" and type the command: `npm install`, then: `expo start`.
 7) On your phone open the app store or google play store and install Expo Client. 
     - you will be able to open the app from the expo client app using the url in the terminal.
     
