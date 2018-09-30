@@ -1,28 +1,21 @@
 import React from 'react';
 import {
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  LayoutAnimation,
-  Dimensions,
-  View,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    Animated,
+    LayoutAnimation,
+    Dimensions,
+    UIManager,
 } from 'react-native';
+import PropTypes from 'prop-types'
 import { FormInput, ButtonGroup } from 'react-native-elements'
 import { Button, Text } from 'native-base';
 
+//enable layout animation for android
+UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+
 let ScreenSize = Dimensions.get('window')
-
-// type Props = {
-//     style?: any,
-// }
-// CCAuthForm.propTypes = {
-//     test: React.propTypes.bool
-// };
-
-// CCAuthForm.defaultProps = {
-//     test: false,
-// };
 
 const linearAnimation = {
     duration: 200,
@@ -37,33 +30,94 @@ const linearAnimation = {
 
 export default class CCAuthForm extends React.Component {
 
+    /**
+     * The initial state for the component
+     */
     state = {
-        sclideInAnimation: new Animated.Value(ScreenSize.height),  // Initial value for opacity: 0
-        buttonText: "Login",
+        slideInAnimation: new Animated.Value(ScreenSize.height),  // Initial value for opacity: 0
+        buttonText: "Log In",
         isLogin: true,
         isForgotPassword: false,
         forgotPasswordText: "Forgot Password?",
         buttonGroupIndex: 0,
+        emailText: '',
+        passwordText: '',
+        repasswordText: '',
     }
 
+    /**
+     * Called immediately after the component mounts
+     */
     componentDidMount() {
+        //animate the component in from the bottom of the screen
         Animated.timing(                  
-        this.state.sclideInAnimation,            
+        this.state.slideInAnimation,            
         {
-            toValue: ScreenSize.height/2-200,                  
+            toValue: ScreenSize.height*.25,                  
             duration: 1000,             
         }
         ).start();                   
     }
 
+    /**
+     * Called when the email text has changed and needs updating in the state.
+     * @param {*} value - value to update the state with.
+     */
+    _emailTextChanged(value){
+        this.setState({ emailText: value });
+    }
+    
+    /**
+     * Called when the password text has changed and needs updating in the state.
+     * @param {*} value - value to update the state with.
+     */
+    _passwordTextChanged(value){
+        this.setState({ passwordText: value });
+    }
+    
+    /**
+     * Called when the repassword text has changed and needs updating in the state.
+     * @param {*} value - value to update the state with.
+     */
+    _repasswordTextChanged(value){
+        this.setState({ repasswordText: value });
+    }
+
+    /**
+     * Clears the text input fields.
+     */
+    _clearInputs(){
+        this.setState({
+            emailText: '',
+            passwordText: '',
+            repasswordText: '',
+        });
+    }
+
+    /**
+     * Updates the state of the form based on the button group index passed in.
+     * Index 0: Login state, Index 1: Sign Up state.
+     * If the isForgotPassword flag is set then it will be disabled.
+     * @param {*} index - the index of the state(0 = login, 1 = sign up)
+     */
     _updateButtonGroupIndex(index){
+
+        //clear the input fields
+        this._clearInputs();
+
+        //create a more readable version of the index
         var isLogin = !index;
 
+        //if the isForgotPassword flag is set
         if (this.state.isForgotPassword){
+            //disable it
             this._forgotPasswordPressed();
         }
 
+        //Setup a layout animation to be fired on the next setState() call
         LayoutAnimation.configureNext(linearAnimation);
+
+        //update the state with the new valeus
         this.setState({
             buttonGroupIndex: index,
             isLogin: isLogin,
@@ -72,29 +126,49 @@ export default class CCAuthForm extends React.Component {
 
     }
 
+    /**
+     * Toggles the isForgotPassword flag and updates the state accordingly.
+     */
     _forgotPasswordPressed(){
+        //get the opposite of the old value for the flag
         var newVal = !this.state.isForgotPassword;
+
+        //setup a layout animation to fire on the next setState() call
         LayoutAnimation.configureNext(linearAnimation);
+
+        //update the state accordingly
         this.setState({
             isForgotPassword: newVal,
             forgotPasswordText: newVal ? 'Log In' : 'Forgot Password?',
             buttonText: newVal ? "Submit" : "Log In",
         });        
     }
-  
-    render() {
-        let { 
-            sclideInAnimation,
-            buttonText,
-        } = this.state;
 
+    /**
+     * Called whenever the user presses the (login/sinup/submit) button.
+     * This method makes a call to the "onSubmitPressed" prop if it is available.
+     * The object passed back is as follows: 
+     * { type: ('login', 'signup', 'forgotpassword'), email:string, password:sring, repassword:string }
+     */
+    _submitPressed() {
+        if (this.props.onSubmitPressed){
+            this.props.onSubmitPressed({
+            });
+        }
+    }
+    
+    /**
+     * Called whenever the component needs to redraw itseld. (mainly when state or props are changed)
+     */
+    render() {
         return (
-            <Animated.View style={[styles.loginForm, {top: sclideInAnimation}]}>
+            <Animated.View style={[styles.loginForm, {top: this.state.slideInAnimation}]}>
                 <FormInput
                     containerStyle={styles.inputStyle}
                     placeholder="Email"
                     autoCorrect={false}
-                    //onChangeText={this.someFunction}
+                    value={this.state.emailText}
+                    onChangeText={(value) => this._emailTextChanged(value)}
                 />
                 {!this.state.isForgotPassword ?
                     <FormInput
@@ -102,8 +176,8 @@ export default class CCAuthForm extends React.Component {
                     autoCorrect={false}
                     secureTextEntry
                     placeholder="Password"
-                    //value={this.state.password}
-                    //onChangeText={this.onPasswordEntry}
+                    value={this.state.passwordText}
+                    onChangeText={(value) => this._passwordTextChanged(value)}
                     />
                     : null
                 }
@@ -113,8 +187,8 @@ export default class CCAuthForm extends React.Component {
                         autoCorrect={false}
                         secureTextEntry
                         placeholder="Re-enter Password"
-                        //value={this.state.password}
-                        //onChangeText={this.onPasswordEntry}
+                        value={this.state.repasswordText}
+                        onChangeText={(value) => this._repasswordTextChanged(value)}
                     />
                     : null
                 }
@@ -129,8 +203,9 @@ export default class CCAuthForm extends React.Component {
                 <Button 
                     style={styles.submitButton} 
                     block
+                    onPress={() => {this._submitPressed()}}
                 >
-                    <Text>{buttonText}</Text>
+                    <Text>{this.state.buttonText}</Text>
                 </Button>
                 <ButtonGroup
                     buttons={["Log In", "Sign Up"]}
@@ -143,6 +218,20 @@ export default class CCAuthForm extends React.Component {
     }
 
 }
+
+/**
+ * A list of the props and their types that this components accepts
+ */
+CCAuthForm.propTypes = {
+    onSubmitPressed: PropTypes.func.isRequired
+};
+
+/**
+ * A list of the default values for props on this component
+ */
+CCAuthForm.defaultProps = {
+    onSubmitPressed: null,
+};
 
 const styles = StyleSheet.create({
     loginForm: {
