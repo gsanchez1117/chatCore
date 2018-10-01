@@ -6,14 +6,11 @@ import {
     Animated,
     LayoutAnimation,
     Dimensions,
-    UIManager,
+    View,
 } from 'react-native';
 import PropTypes from 'prop-types'
 import { FormInput, ButtonGroup } from 'react-native-elements'
 import { Button, Text } from 'native-base';
-
-//enable layout animation for android
-UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
 let ScreenSize = Dimensions.get('window')
 
@@ -24,7 +21,7 @@ const linearAnimation = {
       property: LayoutAnimation.Properties.opacity,
     },
     update: {
-      type: LayoutAnimation.Types.curveEaseInEaseOut,
+      type: LayoutAnimation.Types.easeInEaseOut,
     },
 };
 
@@ -34,7 +31,7 @@ export default class CCAuthForm extends React.Component {
      * The initial state for the component
      */
     state = {
-        slideInAnimation: new Animated.Value(ScreenSize.height),  // Initial value for opacity: 0
+        slideInAnimation: new Animated.Value(ScreenSize.height),
         buttonText: "Log In",
         isLogin: true,
         isForgotPassword: false,
@@ -53,7 +50,7 @@ export default class CCAuthForm extends React.Component {
         Animated.timing(                  
         this.state.slideInAnimation,            
         {
-            toValue: ScreenSize.height*.25,                  
+            toValue: ScreenSize.height*.33,                  
             duration: 1000,             
         }
         ).start();                   
@@ -121,7 +118,7 @@ export default class CCAuthForm extends React.Component {
         this.setState({
             buttonGroupIndex: index,
             isLogin: isLogin,
-            buttonText: (isLogin ? "Login" : "Sign Up" )
+            buttonText: (isLogin ? "Log In" : "Sign Up" )
         });
 
     }
@@ -151,8 +148,18 @@ export default class CCAuthForm extends React.Component {
      * { type: ('login', 'signup', 'forgotpassword'), email:string, password:sring, repassword:string }
      */
     _submitPressed() {
+        //if the onSubmitPressed prop is not null
         if (this.props.onSubmitPressed){
+
+            //get the type
+            var type = this.state.isLogin ? (this.state.isForgotPassword ? 'forgotpassword' : 'login') : 'signup';
+
+            //call the onSubmitPressed prop and pass in the object
             this.props.onSubmitPressed({
+                type: type,
+                email: this.state.emailText,
+                password: this.state.passwordText,
+                repassword: this.state.repasswordText
             });
         }
     }
@@ -170,7 +177,7 @@ export default class CCAuthForm extends React.Component {
                     value={this.state.emailText}
                     onChangeText={(value) => this._emailTextChanged(value)}
                 />
-                {!this.state.isForgotPassword ?
+                { this.state.isForgotPassword === false ?
                     <FormInput
                     containerStyle={styles.inputStyle}
                     autoCorrect={false}
@@ -181,7 +188,7 @@ export default class CCAuthForm extends React.Component {
                     />
                     : null
                 }
-                {!this.state.isLogin ?
+                { this.state.isLogin === false ?
                     <FormInput
                         containerStyle={styles.inputStyle}
                         autoCorrect={false}
@@ -192,7 +199,7 @@ export default class CCAuthForm extends React.Component {
                     />
                     : null
                 }
-                { this.state.isLogin ? 
+                { this.state.isLogin === true ? 
                     <TouchableOpacity
                         onPress = {() => {this._forgotPasswordPressed()}}
                     >
@@ -235,7 +242,6 @@ CCAuthForm.defaultProps = {
 
 const styles = StyleSheet.create({
     loginForm: {
-        position: 'absolute',
         backgroundColor: '#fff',
         marginHorizontal: "10%",
         width: '80%',
