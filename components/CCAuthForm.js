@@ -6,7 +6,6 @@ import {
     Animated,
     LayoutAnimation,
     Dimensions,
-    View,
 } from 'react-native';
 import PropTypes from 'prop-types'
 import { FormInput, ButtonGroup } from 'react-native-elements'
@@ -40,20 +39,30 @@ export default class CCAuthForm extends React.Component {
         emailText: '',
         passwordText: '',
         repasswordText: '',
+        height: 0,
+        initialHeightSet: false,
     }
 
     /**
-     * Called immediately after the component mounts
+     * Called immediately after the component size is set for the first time
      */
-    componentDidMount() {
+    _initialAnimation() {
+        //return if the method has already run once
+        if (this.state.initialHeightSet === true){ return; }
+
         //animate the component in from the bottom of the screen
         Animated.timing(                  
         this.state.slideInAnimation,            
         {
-            toValue: ScreenSize.height*.33,                  
+            toValue: ScreenSize.height*.5 - this.state.height*.5,                  
             duration: 1000,             
         }
-        ).start();                   
+        ).start();
+
+        //set the initialHeightSet flag after running this method once
+        this.setState({
+            initialHeightSet: true
+        });
     }
 
     /**
@@ -163,13 +172,35 @@ export default class CCAuthForm extends React.Component {
             });
         }
     }
+
+    /**
+     * this method is called after each render when the root component has 
+     * calculated its size. If the size has changed we udpate it in the state.
+     * After updated the new size we attempt to call the initial animation.
+     * If it has animated once already the functino will never run.
+     * @param {*} layout - the layout object passed back in the form: { x:int, y:int, width:int, height:int}
+     */
+    _onLayout(layout) {
+        var newHeight = Math.floor(layout.height);
+        if (this.state.height != newHeight){
+            this.setState({
+                height: newHeight,
+            },() => {
+                //try calling the initial animation after setState has finished
+                this._initialAnimation();
+            });
+        }
+    }
     
     /**
      * Called whenever the component needs to redraw itseld. (mainly when state or props are changed)
      */
     render() {
         return (
-            <Animated.View style={[styles.loginForm, {top: this.state.slideInAnimation}]}>
+            <Animated.View 
+                style={[styles.loginForm, {top: this.state.slideInAnimation}]}
+                onLayout = {(event) => {this._onLayout(event.nativeEvent.layout)}}
+            >
                 <FormInput
                     containerStyle={styles.inputStyle}
                     placeholder="Email"
