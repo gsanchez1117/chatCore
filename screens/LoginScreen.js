@@ -3,14 +3,12 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
-  Keyboard,
-  Dimensions,
+  View,
 } from 'react-native';
 import { Content } from 'native-base';
 import  { LinearGradient } from 'expo';
 import CCAuthForm from '../components/CCAuthForm';
-
-let ScreenSize = Dimensions.get('window');
+import * as globalStyles from '../styles/globalStyles';
 
 export default class HomeScreen extends React.Component {
     
@@ -22,7 +20,10 @@ export default class HomeScreen extends React.Component {
     }
 
     _submitPressed(item) {
+        //TODO: Pass the item tot he Auth Controller and check the response.
+        //for now just log the item and navigate the user to the main page...
         console.log(item);
+        this.props.navigation.navigate('Main');
     }
     
     render() {
@@ -31,8 +32,9 @@ export default class HomeScreen extends React.Component {
         <LinearGradient
             style={styles.container}
             contentContainerStyle={styles.contentContainer}
-            colors={['#ef820d', '#FFCC00']}
+            colors={[globalStyles.GS_Color_Contrast_2, globalStyles.GS_Color_Contrast_2]}
         >
+            <View style={{position: 'absolute', width: '100%', height: '50%', backgroundColor: globalStyles.GS_Color_Main_1}}/>
             {/* The type of view used to avoid the keyboard unfortunately must be different on each device.
                 IOS likes the Content view while Android likes the KeyboardAvoidingView
             */}

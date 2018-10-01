@@ -6,10 +6,12 @@ import {
     Animated,
     LayoutAnimation,
     Dimensions,
+    View,
 } from 'react-native';
 import PropTypes from 'prop-types'
 import { FormInput, ButtonGroup } from 'react-native-elements'
-import { Button, Text } from 'native-base';
+import { Button, Text, Toast } from 'native-base';
+import * as globalStyles from '../styles/globalStyles';
 
 let ScreenSize = Dimensions.get('window')
 
@@ -23,6 +25,10 @@ const linearAnimation = {
       type: LayoutAnimation.Types.easeInEaseOut,
     },
 };
+
+const badColor = '#afb7c2';
+const mediumColor = '#f68e4f';
+const goodColor = '#33c4b3';
 
 export default class CCAuthForm extends React.Component {
 
@@ -39,6 +45,9 @@ export default class CCAuthForm extends React.Component {
         emailText: '',
         passwordText: '',
         repasswordText: '',
+        emailColor: badColor,
+        passwordColor: badColor,
+        repasswordColor: badColor,
         height: 0,
         initialHeightSet: false,
     }
@@ -70,7 +79,17 @@ export default class CCAuthForm extends React.Component {
      * @param {*} value - value to update the state with.
      */
     _emailTextChanged(value){
-        this.setState({ emailText: value });
+        if (this.props.emailRegex.test(value)){
+            this.setState({ 
+                emailText: value,
+                emailColor: goodColor,
+            });
+        }else{
+            this.setState({ 
+                emailText: value,
+                emailColor: badColor
+            });
+        }
     }
     
     /**
@@ -78,7 +97,28 @@ export default class CCAuthForm extends React.Component {
      * @param {*} value - value to update the state with.
      */
     _passwordTextChanged(value){
-        this.setState({ passwordText: value });
+        if (this.props.strongPasswordRegex.test(value)){
+            this.setState({ 
+                passwordText: value,
+                passwordColor: goodColor,
+                repasswordText: '',
+                repasswordColor: badColor,
+            });
+        }else if (this.props.mediumPasswordRegex.test(value)){
+            this.setState({ 
+                passwordText: value,
+                passwordColor: mediumColor,
+                repasswordText: '',
+                repasswordColor: badColor,
+            });
+        }else{
+            this.setState({ 
+                passwordText: value,
+                passwordColor: badColor,
+                repasswordText: '',
+                repasswordColor: badColor,
+            });
+        }
     }
     
     /**
@@ -86,7 +126,17 @@ export default class CCAuthForm extends React.Component {
      * @param {*} value - value to update the state with.
      */
     _repasswordTextChanged(value){
-        this.setState({ repasswordText: value });
+        if (this.props.mediumPasswordRegex.test(this.state.passwordText) && this.state.passwordText === value){
+            this.setState({ 
+                repasswordText: value,
+                repasswordColor: goodColor
+            });
+        }else{
+            this.setState({ 
+                repasswordText: value,
+                repasswordColor: badColor
+            });
+        }
     }
 
     /**
@@ -97,6 +147,9 @@ export default class CCAuthForm extends React.Component {
             emailText: '',
             passwordText: '',
             repasswordText: '',
+            emailColor: badColor,
+            passwordColor: badColor,
+            repasswordColor: badColor,
         });
     }
 
@@ -157,11 +210,57 @@ export default class CCAuthForm extends React.Component {
      * { type: ('login', 'signup', 'forgotpassword'), email:string, password:sring, repassword:string }
      */
     _submitPressed() {
-        //if the onSubmitPressed prop is not null
-        if (this.props.onSubmitPressed){
 
-            //get the type
-            var type = this.state.isLogin ? (this.state.isForgotPassword ? 'forgotpassword' : 'login') : 'signup';
+        //get the type
+        var type = this.state.isLogin ? (this.state.isForgotPassword ? 'forgotpassword' : 'login') : 'signup';
+
+        var validInput = true;
+
+        //check email for all types
+        if (type == 'forgotpassword' || type == 'login' || type == 'signup'){
+            validInput = this.props.emailRegex.test(this.state.emailText);
+            if (validInput == false){
+                Toast.show({
+                    type: 'danger',
+                    text: 'Not a valid Email Address!',
+                    buttonText: 'Okay'
+                });
+                if (this.emailInput)
+                    this.emailInput.shake();
+                return;
+            }
+        }
+        //check password only for login and signup
+        if (type == 'login' || type == 'signup'){
+            validInput = this.props.mediumPasswordRegex.test(this.state.passwordText);
+            if (validInput == false){
+                Toast.show({
+                    type: 'danger',
+                    text: 'Password not strong enough!',
+                    buttonText: 'Okay'
+                });
+                if (this.passwordInput)
+                    this.passwordInput.shake();
+                return;
+            }
+        }
+        //check repassword only for signup
+        if (type == 'signup'){
+            validInput = this.props.mediumPasswordRegex.test(this.state.passwordText) && this.state.passwordText === this.state.repasswordText;
+            if (validInput == false){
+                Toast.show({
+                    type: 'danger',
+                    text: 'Passwords do not match!',
+                    buttonText: 'Okay'
+                });
+                if (this.repasswordInput)
+                    this.repasswordInput.shake();
+                return;
+            }
+        }
+
+        //if the input is valid and the onSubmitPressed prop is not null
+        if (validInput && this.props.onSubmitPressed){
 
             //call the onSubmitPressed prop and pass in the object
             this.props.onSubmitPressed({
@@ -170,6 +269,9 @@ export default class CCAuthForm extends React.Component {
                 password: this.state.passwordText,
                 repassword: this.state.repasswordText
             });
+
+            //clear the inputs after a successful submission
+            this._clearInputs();
         }
     }
 
@@ -201,33 +303,45 @@ export default class CCAuthForm extends React.Component {
                 style={[styles.loginForm, {top: this.state.slideInAnimation}]}
                 onLayout = {(event) => {this._onLayout(event.nativeEvent.layout)}}
             >
-                <FormInput
-                    containerStyle={styles.inputStyle}
-                    placeholder="Email"
-                    autoCorrect={false}
-                    value={this.state.emailText}
-                    onChangeText={(value) => this._emailTextChanged(value)}
-                />
-                { this.state.isForgotPassword === false ?
+                <View style={styles.inputContainer}>
+                    <View style={[styles.textStatusBox, {backgroundColor: this.state.emailColor}]}/>
                     <FormInput
-                    containerStyle={styles.inputStyle}
-                    autoCorrect={false}
-                    secureTextEntry
-                    placeholder="Password"
-                    value={this.state.passwordText}
-                    onChangeText={(value) => this._passwordTextChanged(value)}
+                        ref = {input=>this.emailInput = input }
+                        containerStyle={styles.inputStyle}
+                        placeholder="Email"
+                        autoCorrect={false}
+                        value={this.state.emailText}
+                        onChangeText={(value) => this._emailTextChanged(value)}
                     />
+                </View>
+                { this.state.isForgotPassword == false ?
+                    <View style={styles.inputContainer}>
+                        <View style={[styles.textStatusBox, {backgroundColor: this.state.passwordColor}]}/>
+                        <FormInput
+                            ref = {input=>this.passwordInput = input }
+                            containerStyle={styles.inputStyle}
+                            autoCorrect={false}
+                            secureTextEntry
+                            placeholder="Password"
+                            value={this.state.passwordText}
+                            onChangeText={(value) => this._passwordTextChanged(value)}
+                        />
+                    </View>
                     : null
                 }
                 { this.state.isLogin === false ?
-                    <FormInput
-                        containerStyle={styles.inputStyle}
-                        autoCorrect={false}
-                        secureTextEntry
-                        placeholder="Re-enter Password"
-                        value={this.state.repasswordText}
-                        onChangeText={(value) => this._repasswordTextChanged(value)}
-                    />
+                    <View style={styles.inputContainer}>
+                        <View style={[styles.textStatusBox, {backgroundColor: this.state.repasswordColor}]}/>
+                        <FormInput
+                            ref = {input=>this.repasswordInput = input }
+                            containerStyle={styles.inputStyle}
+                            autoCorrect={false}
+                            secureTextEntry
+                            placeholder="Re-enter Password"
+                            value={this.state.repasswordText}
+                            onChangeText={(value) => this._repasswordTextChanged(value)}
+                        />
+                    </View>
                     : null
                 }
                 { this.state.isLogin === true ? 
@@ -261,7 +375,10 @@ export default class CCAuthForm extends React.Component {
  * A list of the props and their types that this components accepts
  */
 CCAuthForm.propTypes = {
-    onSubmitPressed: PropTypes.func.isRequired
+    onSubmitPressed: PropTypes.func.isRequired,
+    emailRegex: PropTypes.instanceOf(RegExp),
+    strongPasswordRegex: PropTypes.instanceOf(RegExp),
+    mediumPasswordRegex: PropTypes.instanceOf(RegExp),
 };
 
 /**
@@ -269,46 +386,62 @@ CCAuthForm.propTypes = {
  */
 CCAuthForm.defaultProps = {
     onSubmitPressed: null,
+    emailRegex: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+    strongPasswordRegex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
+    mediumPasswordRegex: /^(?=.*[a-z])(?=.*[A-Z])((?=.*[0-9])|(?=.*[!@#\$%\^&\*]))(?=.{8,})/,
 };
 
 const styles = StyleSheet.create({
     loginForm: {
-        backgroundColor: '#fff',
+        backgroundColor: globalStyles.GS_Color_Contrast_1,
         marginHorizontal: "10%",
         width: '80%',
         paddingTop: 30,
         borderRadius: 10,
-        overflow: 'hidden',
+        //overflow: 'hidden',
         ...Platform.select({
             ios: {
               shadowColor: 'black',
-              shadowOffset: { height: -3 },
-              shadowOpacity: 0.1,
-              shadowRadius: 3,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.2,
+              shadowRadius: 5,
             },
             android: {
-              elevation: 20,
+              elevation: 5,
             },
           }),
     },
+    inputContainer: {
+        flexDirection: 'row',
+        marginRight: 10,
+        width: '100%',
+    },
     inputStyle: {
-        marginVertical: 10,
-        borderColor: '#336688',
+        flex:1,
+        marginLeft: 10,
+        marginRight: 20,
+        marginTop: 10,
+        borderColor: '#33c4b3',
+    },
+    textStatusBox: {
+        width: 10,
+        height: '100%'
     },
     forgotText: {
         marginVertical: 10,
         textAlign: 'center',
-        color: '#336688',
     },
     submitButton: {
         marginVertical: 20,
         marginHorizontal: 20, //matches the margin of the input fields
-        backgroundColor: '#336688',
+        backgroundColor: globalStyles.GS_Color_Highlight_1,
     },
     buttonGroup: {
         marginBottom: 0,
         marginLeft: 0,
         marginRight: 0,
         borderRadius: 0,
+        borderColor: '#0000',
+        borderRadius: 10,
     },
 });
