@@ -2,59 +2,99 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { createStackNavigator, createBottomTabNavigator } from 'react-navigation';
 
+//Icon names can be found at: https://infinitered.github.io/ionicons-version-3-search/?
 import TabBarIcon from '../components/TabBarIcon';
-import HomeScreen from '../screens/HomeScreen';
-import LinksScreen from '../screens/LinksScreen';
-import SettingsScreen from '../screens/SettingsScreen';
 
-const HomeStack = createStackNavigator({
+//screen imports
+import HomeScreen from '../screens/HomeScreen';
+import LocationScreen from '../screens/LocationScreen';
+import FriendsScreen from '../screens/FriendsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+
+
+/*********************
+ * Home Screen Stack *
+ *********************/
+
+const HomeScreenStack = createStackNavigator({
   Home: HomeScreen,
 });
 
-HomeStack.navigationOptions = {
+HomeScreenStack.navigationOptions = {
   tabBarLabel: 'Home',
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
       name={
         Platform.OS === 'ios'
-          ? `ios-information-circle${focused ? '' : '-outline'}`
-          : 'md-information-circle'
+          ? `ios-home${focused ? '' : '-outline'}`
+          : 'md-home'
       }
     />
   ),
 };
 
-const LinksStack = createStackNavigator({
-  Links: LinksScreen,
+/*************************
+ * Location Screen Stack *
+ *************************/
+
+const LocationScreenStack = createStackNavigator({
+  Location: LocationScreen,
 });
 
-LinksStack.navigationOptions = {
-  tabBarLabel: 'Links',
+LocationScreenStack.navigationOptions = {
+  tabBarLabel: 'Location',
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
-      name={Platform.OS === 'ios' ? `ios-link${focused ? '' : '-outline'}` : 'md-link'}
+      name={Platform.OS === 'ios' ? `ios-compass${focused ? '' : '-outline'}` : 'md-compass'}
     />
   ),
 };
 
-const SettingsStack = createStackNavigator({
-  Settings: SettingsScreen,
+/************************
+ * Friends Screen Stack *
+ ************************/
+
+const FriendsScreenStack = createStackNavigator({
+  Friends: FriendsScreen,
 });
 
-SettingsStack.navigationOptions = {
-  tabBarLabel: 'Settings',
+FriendsScreenStack.navigationOptions = {
+  tabBarLabel: 'Friends',
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
-      name={Platform.OS === 'ios' ? `ios-options${focused ? '' : '-outline'}` : 'md-options'}
+      name={Platform.OS === 'ios' ? `ios-contacts${focused ? '' : '-outline'}` : 'md-contacts'}
     />
   ),
 };
+
+/************************
+ * Profile Screen Stack *
+ ************************/
+
+const ProfileScreenStack = createStackNavigator({
+  Profile: ProfileScreen,
+});
+
+ProfileScreenStack.navigationOptions = {
+  tabBarLabel: 'Profile',
+  tabBarIcon: ({ focused }) => (
+    <TabBarIcon
+      focused={focused}
+      name={Platform.OS === 'ios' ? `ios-contact${focused ? '' : '-outline'}` : 'md-contact'}
+    />
+  ),
+};
+
+/**********************
+ * Main Tab Navigator *
+ **********************/
 
 export default createBottomTabNavigator({
-  HomeStack,
-  LinksStack,
-  SettingsStack,
+  HomeScreenStack,
+  LocationScreenStack,
+  FriendsScreenStack,
+  ProfileScreenStack,
 });
