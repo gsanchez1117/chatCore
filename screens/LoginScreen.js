@@ -5,10 +5,11 @@ import {
   KeyboardAvoidingView,
   View,
 } from 'react-native';
-import { Content } from 'native-base';
+import { Content, Toast } from 'native-base';
 import  { LinearGradient } from 'expo';
 import CCAuthForm from '../components/CCAuthForm';
 import * as globalStyles from '../styles/globalStyles';
+import * as firebase from 'firebase';
 
 export default class HomeScreen extends React.Component {
     
@@ -17,13 +18,45 @@ export default class HomeScreen extends React.Component {
     };
     
     state = {
+        isLoading: false
     }
 
     _submitPressed(item) {
-        //TODO: Pass the item tot he Auth Controller and check the response.
-        //for now just log the item and navigate the user to the main page...
-        console.log(item);
-        this.props.navigation.navigate('Main');
+        var self = this;
+        switch(item.type){
+            case "login": {
+                this.setState({ isLoading:true });
+                firebase.auth().signInWithEmailAndPassword(item.email, item.password).catch(function(error) {
+                    self._displayMessage('danger', error.message);
+                });
+                break;
+            }case "signup":{
+                this.setState({ isLoading:true });
+                firebase.auth().createUserWithEmailAndPassword(item.email, item.password).catch(function(error) {
+                    self._displayMessage('danger', error.message);
+                });
+                break;
+            }case "forgotpassword":{
+                this.setState({ isLoading:true });
+                firebase.auth().sendPasswordResetEmail(item.email).then(function() {
+                    self._displayMessage('success', 'Email Sent!');
+                }).catch(function(error) {
+                    self._displayMessage('danger', error.message);
+                });
+                break;
+            }
+        }
+    }
+
+    _displayMessage = (type, text) => {
+        if (this.state.isLoading)
+            this.setState({ isLoading:false });
+        Toast.show({
+            type: type,
+            text: text,
+            buttonText: 'Okay',
+            duration: 3000,
+        });
     }
     
     render() {
@@ -43,6 +76,7 @@ export default class HomeScreen extends React.Component {
                     style={styles.container} 
                 >
                     <CCAuthForm
+                        isLoading={this.state.isLoading}
                         onSubmitPressed = {(item) => this._submitPressed(item)}
                     />
                 </Content>
@@ -55,9 +89,14 @@ export default class HomeScreen extends React.Component {
                     keyboardVerticalOffset = {-150} 
                 >
                     <CCAuthForm
+                        isLoading={this.state.isLoading}
                         onSubmitPressed = {(item) => this._submitPressed(item)}
                     />
                 </KeyboardAvoidingView>
+            }
+            {this.state.isLoading ?
+                <View style={{position: 'absolute', width:"100%", height:"100%", backgroundColor:"#00000000"}} />
+                : null
             }
         </LinearGradient>
     );

@@ -3,13 +3,38 @@ import { Platform, StatusBar, StyleSheet, View, UIManager } from 'react-native';
 import { AppLoading, Asset, Font, Icon } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
 import { Root } from 'native-base';
+import './services/firebase';
+import * as firebase from 'firebase';
+import LoginScreen from './screens/LoginScreen';
+
 
 //enable layout animation for android
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export default class App extends React.Component {
+
+  constructor(){
+    super();
+
+    var self = this;
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        // User is signed in.
+        self.setState({
+          userSignedIn: true,
+        })
+      } else {
+        // User is signed out.
+        self.setState({
+          userSignedIn: false,
+        });
+      }
+    });
+  }
+
   state = {
     isLoadingComplete: false,
+    userSignedIn: false,
   };
 
   render() {
@@ -26,7 +51,11 @@ export default class App extends React.Component {
         <Root>
           <View style={styles.container}>
             {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-            <AppNavigator />
+            {this.state.userSignedIn ? 
+              <AppNavigator />
+            :
+              <LoginScreen />
+            }
           </View>
         </Root>
       );

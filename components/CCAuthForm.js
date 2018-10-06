@@ -9,8 +9,8 @@ import {
     View,
 } from 'react-native';
 import PropTypes from 'prop-types'
-import { FormInput, ButtonGroup } from 'react-native-elements'
-import { Button, Text, Toast } from 'native-base';
+import { FormInput, ButtonGroup, Button } from 'react-native-elements'
+import { Text, Toast } from 'native-base';
 import * as globalStyles from '../styles/globalStyles';
 
 let ScreenSize = Dimensions.get('window')
@@ -31,6 +31,10 @@ const mediumColor = '#f68e4f';
 const goodColor = '#33c4b3';
 
 export default class CCAuthForm extends React.Component {
+
+    constructor(props){
+        super(props);
+    }
 
     /**
      * The initial state for the component
@@ -223,7 +227,8 @@ export default class CCAuthForm extends React.Component {
                 Toast.show({
                     type: 'danger',
                     text: 'Not a valid Email Address!',
-                    buttonText: 'Okay'
+                    buttonText: 'Okay',
+                    duration: 3000,
                 });
                 if (this.emailInput)
                     this.emailInput.shake();
@@ -237,7 +242,8 @@ export default class CCAuthForm extends React.Component {
                 Toast.show({
                     type: 'danger',
                     text: 'Password not strong enough!',
-                    buttonText: 'Okay'
+                    buttonText: 'Okay',
+                    duration: 3000,
                 });
                 if (this.passwordInput)
                     this.passwordInput.shake();
@@ -251,7 +257,8 @@ export default class CCAuthForm extends React.Component {
                 Toast.show({
                     type: 'danger',
                     text: 'Passwords do not match!',
-                    buttonText: 'Okay'
+                    buttonText: 'Okay',
+                    duration: 3000,
                 });
                 if (this.repasswordInput)
                     this.repasswordInput.shake();
@@ -267,7 +274,6 @@ export default class CCAuthForm extends React.Component {
                 type: type,
                 email: this.state.emailText,
                 password: this.state.passwordText,
-                repassword: this.state.repasswordText
             });
 
             //clear the inputs after a successful submission
@@ -311,6 +317,7 @@ export default class CCAuthForm extends React.Component {
                         placeholder="Email"
                         autoCorrect={false}
                         value={this.state.emailText}
+                        editable={!this.props.isLoading}
                         onChangeText={(value) => this._emailTextChanged(value)}
                     />
                 </View>
@@ -324,6 +331,7 @@ export default class CCAuthForm extends React.Component {
                             secureTextEntry
                             placeholder="Password"
                             value={this.state.passwordText}
+                            editable={!this.props.isLoading}
                             onChangeText={(value) => this._passwordTextChanged(value)}
                         />
                     </View>
@@ -339,6 +347,7 @@ export default class CCAuthForm extends React.Component {
                             secureTextEntry
                             placeholder="Re-enter Password"
                             value={this.state.repasswordText}
+                            editable={!this.props.isLoading}
                             onChangeText={(value) => this._repasswordTextChanged(value)}
                         />
                     </View>
@@ -346,6 +355,7 @@ export default class CCAuthForm extends React.Component {
                 }
                 { this.state.isLogin === true ? 
                     <TouchableOpacity
+                        disabled={this.props.isLoading}
                         onPress = {() => {this._forgotPasswordPressed()}}
                     >
                         <Text style={styles.forgotText}>{this.state.forgotPasswordText}</Text>
@@ -353,12 +363,14 @@ export default class CCAuthForm extends React.Component {
                     : null
                 }
                 <Button 
-                    style={styles.submitButton} 
-                    block
+                    title={this.props.isLoading ? "" : this.state.buttonText}
+                    loading={this.props.isLoading}
+                    disabled={this.props.isLoading}
+                    loadingProps={{ size: "large", color: "white" }}
+                    buttonStyle={styles.submitButton} 
+                    disabledStyle={styles.submitButton}
                     onPress={() => {this._submitPressed()}}
-                >
-                    <Text>{this.state.buttonText}</Text>
-                </Button>
+                />
                 <ButtonGroup
                     buttons={["Log In", "Sign Up"]}
                     containerStyle={styles.buttonGroup}
@@ -375,6 +387,7 @@ export default class CCAuthForm extends React.Component {
  * A list of the props and their types that this components accepts
  */
 CCAuthForm.propTypes = {
+    isLoading: PropTypes.bool,
     onSubmitPressed: PropTypes.func.isRequired,
     emailRegex: PropTypes.instanceOf(RegExp),
     strongPasswordRegex: PropTypes.instanceOf(RegExp),
@@ -385,6 +398,7 @@ CCAuthForm.propTypes = {
  * A list of the default values for props on this component
  */
 CCAuthForm.defaultProps = {
+    isLoading: false,
     onSubmitPressed: null,
     emailRegex: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
     strongPasswordRegex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
@@ -433,8 +447,9 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         marginVertical: 20,
-        marginHorizontal: 20, //matches the margin of the input fields
+        //marginHorizontal: 20, //matches the margin of the input fields
         backgroundColor: globalStyles.GS_Color_Highlight_1,
+        borderRadius: 5,
     },
     buttonGroup: {
         marginBottom: 0,
