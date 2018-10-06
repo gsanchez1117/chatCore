@@ -1,11 +1,40 @@
 import React from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { Platform, StatusBar, StyleSheet, View, UIManager } from 'react-native';
 import { AppLoading, Asset, Font, Icon } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
+import { Root } from 'native-base';
+import './services/firebase';
+import * as firebase from 'firebase';
+import LoginScreen from './screens/LoginScreen';
+
+
+//enable layout animation for android
+UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export default class App extends React.Component {
+
+  constructor(){
+    super();
+
+    var self = this;
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        // User is signed in.
+        self.setState({
+          userSignedIn: true,
+        })
+      } else {
+        // User is signed out.
+        self.setState({
+          userSignedIn: false,
+        });
+      }
+    });
+  }
+
   state = {
     isLoadingComplete: false,
+    userSignedIn: false,
   };
 
   render() {
@@ -19,10 +48,16 @@ export default class App extends React.Component {
       );
     } else {
       return (
-        <View style={styles.container}>
-          {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-          <AppNavigator />
-        </View>
+        <Root>
+          <View style={styles.container}>
+            {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
+            {this.state.userSignedIn ? 
+              <AppNavigator />
+            :
+              <LoginScreen />
+            }
+          </View>
+        </Root>
       );
     }
   }
@@ -39,6 +74,7 @@ export default class App extends React.Component {
         // We include SpaceMono because we use it in HomeScreen.js. Feel free
         // to remove this if you are not using it in your app
         'space-mono': require('./assets/fonts/SpaceMono-Regular.ttf'),
+        'Roboto_medium': require('./assets/fonts/Roboto-Medium.ttf'),
       }),
     ]);
   };
