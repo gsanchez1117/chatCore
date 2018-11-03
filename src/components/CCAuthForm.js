@@ -11,9 +11,9 @@ import {
 import PropTypes from 'prop-types'
 import { FormInput, ButtonGroup, Button } from 'react-native-elements'
 import { Text, Toast } from 'native-base';
-import * as globalStyles from '../styles/globalStyles';
+import Colors from '../constants/Colors';
 
-let ScreenSize = Dimensions.get('window')
+let ScreenSize = Dimensions.get('window');
 
 const linearAnimation = {
     duration: 200,
@@ -407,7 +407,7 @@ CCAuthForm.defaultProps = {
 
 const styles = StyleSheet.create({
     loginForm: {
-        backgroundColor: globalStyles.GS_Color_Contrast_1,
+        backgroundColor: Colors.GS_Color_Contrast_1,
         marginHorizontal: "10%",
         width: '80%',
         paddingTop: 30,
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
     submitButton: {
         marginVertical: 20,
         //marginHorizontal: 20, //matches the margin of the input fields
-        backgroundColor: globalStyles.GS_Color_Highlight_1,
+        backgroundColor: "#69409e",//Colors.GS_Color_Highlight_1,
         borderRadius: 5,
     },
     buttonGroup: {

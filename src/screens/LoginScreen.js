@@ -4,11 +4,12 @@ import {
   Platform,
   KeyboardAvoidingView,
   View,
+  Image
 } from 'react-native';
 import { Content, Toast } from 'native-base';
 import  { LinearGradient } from 'expo';
+import Colors from '../constants/Colors';
 import CCAuthForm from '../components/CCAuthForm';
-import * as globalStyles from '../styles/globalStyles';
 import * as firebase from 'firebase';
 
 export default class HomeScreen extends React.Component {
@@ -62,12 +63,16 @@ export default class HomeScreen extends React.Component {
     render() {
             
         return (
+        <View style={styles.container}>
+            <Image style={{position: 'absolute', width: '100%', height: '100%', resizeMode: 'cover'}} 
+                source={require('../assets/images/loginBg.jpg')}
+            />
         <LinearGradient
             style={styles.container}
             contentContainerStyle={styles.contentContainer}
-            colors={[globalStyles.GS_Color_Contrast_2, globalStyles.GS_Color_Contrast_2]}
+            colors={["#69588344", "#362247cc"]}
         >
-            <View style={{position: 'absolute', width: '100%', height: '50%', backgroundColor: globalStyles.GS_Color_Main_1}}/>
+            {/* <View style={{position: 'absolute', width: '100%', height: '50%', backgroundColor: Colors.GS_Color_Main_1}}/> */}
             {/* The type of view used to avoid the keyboard unfortunately must be different on each device.
                 IOS likes the Content view while Android likes the KeyboardAvoidingView
             */}
@@ -99,6 +104,7 @@ export default class HomeScreen extends React.Component {
                 : null
             }
         </LinearGradient>
+        </View>
     );
   }
 

@@ -8,4 +8,6 @@ const firebaseConfig = {
   projectId: "chatcore-48862",
   messagingSenderId: "910207940401"
 };
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig, {
+  timestampsInSnapshots: true
+});
