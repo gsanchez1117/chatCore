@@ -9,7 +9,7 @@ import {
     View,
 } from 'react-native';
 import PropTypes from 'prop-types'
-import { FormInput, ButtonGroup, Button } from 'react-native-elements'
+import { Input, ButtonGroup, Button } from 'react-native-elements'
 import { Text, Toast } from 'native-base';
 import Colors from '../constants/Colors';
 
@@ -311,7 +311,7 @@ export default class CCAuthForm extends React.Component {
             >
                 <View style={styles.inputContainer}>
                     <View style={[styles.textStatusBox, {backgroundColor: this.state.emailColor}]}/>
-                    <FormInput
+                    <Input
                         ref = {input=>this.emailInput = input }
                         containerStyle={styles.inputStyle}
                         placeholder="Email"
@@ -324,7 +324,7 @@ export default class CCAuthForm extends React.Component {
                 { this.state.isForgotPassword == false ?
                     <View style={styles.inputContainer}>
                         <View style={[styles.textStatusBox, {backgroundColor: this.state.passwordColor}]}/>
-                        <FormInput
+                        <Input
                             ref = {input=>this.passwordInput = input }
                             containerStyle={styles.inputStyle}
                             autoCorrect={false}
@@ -340,7 +340,7 @@ export default class CCAuthForm extends React.Component {
                 { this.state.isLogin === false ?
                     <View style={styles.inputContainer}>
                         <View style={[styles.textStatusBox, {backgroundColor: this.state.repasswordColor}]}/>
-                        <FormInput
+                        <Input
                             ref = {input=>this.repasswordInput = input }
                             containerStyle={styles.inputStyle}
                             autoCorrect={false}
@@ -372,9 +372,11 @@ export default class CCAuthForm extends React.Component {
                     onPress={() => {this._submitPressed()}}
                 />
                 <ButtonGroup
-                    buttons={["Log In", "Sign Up"]}
+                    buttons={[<Text>Log In</Text>, <Text>Sign Up</Text>]}
                     containerStyle={styles.buttonGroup}
                     selectedIndex={this.state.buttonGroupIndex}
+                    buttonStyle={styles.buttonGroupNormal}
+                    selectedButtonStyle={styles.buttonGroupSelected}
                     onPress={(index) => {this._updateButtonGroupIndex(index)}}
                 />
             </Animated.View>
@@ -447,7 +449,7 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         marginVertical: 20,
-        //marginHorizontal: 20, //matches the margin of the input fields
+        marginHorizontal: 20, //matches the margin of the input fields
         backgroundColor: "#69409e",//Colors.GS_Color_Highlight_1,
         borderRadius: 5,
     },
@@ -456,7 +458,23 @@ const styles = StyleSheet.create({
         marginLeft: 0,
         marginRight: 0,
         borderRadius: 0,
+        padding: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
         borderColor: '#0000',
-        borderRadius: 10,
+        borderBottomStartRadius: 10,
+        borderBottomEndRadius: 10,
+        borderWidth: 0,
+    },
+    buttonGroupNormal: {
+
+    },
+    buttonGroupSelected: {
+        backgroundColor: 'pink',
+        padding: 0,
+        paddingLeft: 0,
+        borderRadius: 0,
+        margin: 0,
+        marginLeft: 0
     },
 });

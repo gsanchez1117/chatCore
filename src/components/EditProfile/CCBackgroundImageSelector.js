@@ -1,9 +1,12 @@
 import React from 'react';
-import { StyleSheet, View, FlatList, Image, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
-import PropTypes from 'prop-types'
-import { Text, Container, Content } from 'native-base';
+import { StyleSheet, View, FlatList, Dimensions, ActivityIndicator } from 'react-native';
+import PropTypes from 'prop-types';
+import { Text } from 'native-base';
 import { SearchBar } from 'react-native-elements';
 import CCUnsplash from '../../services/unsplash';
+import _ from 'lodash';
+
+import CCBackgroundImageListItem from './CCBackgroundImageListItem'; 
 
 const {height} = Dimensions.get('window');
 
@@ -12,69 +15,137 @@ export default class CCBackgroundImageSelector extends React.Component {
     constructor(props){
         super(props);
         
+        //initial state
         this.state = {
             data: [],
             currentPage: 0,
+            pageSize: 30,
+            order_by: 'popular',
+            searchDelay: 1000,
+            searchText: '',
+            endReached: false,
         };
 
-        var self = this;
-
-        var self = this;
-        setTimeout(() => {
-            CCUnsplash.photos.listPhotos(0, 12, "latest")
-            .then(response => response.json())
-            .then(response => {
-                self.setState({
-                    data: response,
-                });
-            });
-        }, 1000);
+        //fetch the inital data set
+        this._loadMoreData();
 
     }
 
+    /**
+     * Called whenever data needs to be loaded. Decides how to load the data.
+     */
+    _loadMoreData() {
+        //dont ask for more data if we have reached the end of the list
+        if (this.state.endReached){ return; }
+        
+        var self = this;
+        var nextPage = this.state.currentPage + 1;
+
+        //uses the default listPhotos functionality
+        if (_.trim(this.state.searchText) === ''){
+
+            setTimeout(() => {
+                CCUnsplash.photos.listPhotos(nextPage, this.state.pageSize, this.state.order_by)
+                .then(response => response.json())
+                .then(response => {
+                    self.setState({
+                        data: self.state.data.concat(response),
+                        currentPage: nextPage,
+                        endReached: (response.length == 0)
+                    });
+                });
+            }, this.state.searchDelay);
+
+        //runs a user defined search for photos
+        }else{
+
+            setTimeout(() => {
+                CCUnsplash.search.photos(this.state.searchText, nextPage, this.state.pageSize)
+                .then(response => response.json())
+                .then(response => {
+                    self.setState({
+                        data: self.state.data.concat(response.results),
+                        currentPage: nextPage,
+                        endReached: (response.results.length == 0)
+                    });
+                });
+            }, this.state.searchDelay);
+
+        }
+
+    }
+
+    /**
+     * Called each time a list item needs to be rendered
+     * @param {*} item - the corresponding data item for the list item
+     */
     _renderItem(item) {
+        var firstName = item.user.first_name ? item.user.first_name : '';
+        var lastName = item.user.last_name ? item.user.last_name : '';
+        var selected = item.hasOwnProperty('selected') ? item.selected : false;
         return (
-            <View style={styles.itemContainer}>
-                <Image 
-                    style={{width:"100%", height:"100%", overflow: 'hidden', borderRadius: 5}} 
-                    source={{uri: item.urls.thumb}}
-                    resizeMethod="scale"
-                />
-                <View style={styles.itemOverlay}>
-                    <View style={styles.textBox}>
-                        <Text style={{color:"white"}}>{item.user.first_name + " " + item.user.last_name}</Text>
-                    </View>
-                </View>
-            </View>
+            <CCBackgroundImageListItem
+                onPress={() => this._itemPressed(item)}
+                url={item.urls.thumb}
+                name={firstName + ' ' + lastName}
+                selected={selected}
+            />
         );
     }
 
-    _loadMoreData() {
-        var self = this;
-        setTimeout(() => {
-            var nextPage = this.state.currentPage + 1;
-            CCUnsplash.photos.listPhotos(nextPage, 12, "latest")
-            .then(response => response.json())
-            .then(response => {
-                self.setState({
-                    data: self.state.data.concat(response),
-                    currentPage: nextPage,
-                });
-            });
-        }, 1000);
+    /**
+     * Called whenever a list item is pressed.
+     * @param {*} item - the data item that corresponds to the pressed list item. 
+     */
+    _itemPressed(item) {
+        
+        //unselect all other items
+        this.state.data.forEach(element => {
+            if (element.hasOwnProperty('selected')){
+                element.selected = false;
+            }
+        });
+        
+        //select the passed in item
+        item['selected'] = true;
+        
+        //force an update on the objects data 
+        this.setState({
+            data: this.state.data
+        });
+
+        //notify any listeners of the item that was selected
+        if (this.props.onItemSelected)
+            this.props.onItemSelected(item);
     }
-    _searchTextChanged() {
-        var self = this;
-        setTimeout(() => {
-            CCUnsplash.search.photos("dogs", this.state.currentPage, 12)
-            .then(response => response.json())
-            .then(response => {
-                self.setState({
-                    data: self.state.data.concat(response),
-                    
-                });
-            });
-        }, 1000);
+
+    /**
+     * called whenever the search button is pressed or a clear is pressed.
+     */
+    _searchSubmitPressed() {
+        this.setState({
+            currentPage: 0,
+            data: [],     
+            endReached: false,     
+        }, () => {
+            this._loadMoreData();
+        });
+    }
+
+    /**
+     * Called whenever the search or clear buttons are pressed on the search bar
+     * @param {*} value - search text new value if search is pressed. undefined if clear is pressed
+     */
+    _searchTextChanged(value){
+        this.setState({
+            searchText: value ? value : ''          
+        }, () => {
+            //clear button was pressed
+            if (!value){
+                //act as if the search button was pressed with a blank entry
+                this._searchSubmitPressed();
+            }
+        });
     }
 
     render () {
@@ -84,10 +155,13 @@ export default class CCBackgroundImageSelector extends React.Component {
                     <Text style={{color: 'grey'}}>Photos By Unsplash</Text>
                 </View>
                 <SearchBar
-                    lightTheme
                     platform="ios"
                     placeholder="Photos"
                     onChangeText={(value) => this._searchTextChanged(value)}
+                    value={this.state.searchText}
+                    onClearText={() => this._searchTextChanged()}
+                    onSubmitEditing={() => this._searchSubmitPressed()}
+                    returnKeyType="search"
                 />
                 <FlatList 
                     ref={ (c) => this.myList = c }
@@ -99,7 +173,9 @@ export default class CCBackgroundImageSelector extends React.Component {
                     keyExtractor={(item, index) => item.id + index.toString()}
                     nestedScrollEnabled={true}
                     ListFooterComponent={
-                        <ActivityIndicator size="large" />
+                        this.state.endReached 
+                        ? <Text style={{textAlign:"center"}}>End of list</Text>
+                        : <ActivityIndicator size="large" />
                     }
                 />
             </View>
@@ -111,45 +187,20 @@ export default class CCBackgroundImageSelector extends React.Component {
  * A list of the props and their types that this components accepts
  */
 CCBackgroundImageSelector.propTypes = {
-    enableScrolling: PropTypes.bool,
-    onScrollBegan: PropTypes.func,
-    onScrollEnded: PropTypes.func,
+    /**
+     * Called whenever a user clicks on a specific item. The item is passed back.
+     */
+    onItemSelected: PropTypes.func
 };
 
 /**
  * A list of the default values for props on this component
  */
 CCBackgroundImageSelector.defaultProps = {
-    enableScrolling: true,
-    onScrollBegan: null,
-    onScrollEnded: null,
+    onItemSelected: null
 };
 
 const styles = StyleSheet.create({
-    itemContainer: {
-        overflow: 'hidden',
-        flex:1,
-        aspectRatio:1.3,
-        padding:10,
-        borderRadius: 5,
-    },
-    itemOverlay: {
-        position: 'absolute',
-        overflow: 'hidden',
-        margin: 10,
-        width: "100%",
-        height: '100%',
-        justifyContent: 'flex-end',
-    },
-    textBox: {
-        width: '100%', 
-        height: "25%", 
-        borderBottomStartRadius: 5,
-        borderBottomEndRadius: 5,
-        backgroundColor: '#00000099', 
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
     creditBox: {
         width: "100%", 
         height: 40, 

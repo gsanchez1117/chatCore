@@ -1,6 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View, Switch, Platform } from 'react-native';
-import { Accordion, Content, Container } from 'native-base';
+import { StyleSheet, Text, View, Switch } from 'react-native';
 import { Icon } from 'react-native-elements';
 
 import Colors from '../constants/Colors';
@@ -21,11 +20,15 @@ export default class FriendsScreen extends React.Component {
 
     this.state = {
       dataArray: [
-        { title: "Background Image", canToggle: false, active: true, content: <CCBackgroundImageSelector/> },
+        { title: "Background Image", canToggle: false, active: true, content: <CCBackgroundImageSelector onItemSelected={(item) => this._backgroundImageSelected(item)}/> },
         { title: "About Me", canToggle: true, active: false, content: <CCEditProfileAboutMe/> },
         { title: "Contact", canToggle: true, active: false, content: null },
       ]
     }
+  }
+
+  _backgroundImageSelected(item) {
+    console.log(item);
   }
 
   /**
